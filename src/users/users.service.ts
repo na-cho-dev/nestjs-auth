@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schema/user.schema';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { hash } from 'bcryptjs';
 
 @Injectable()
@@ -11,10 +11,19 @@ export class UsersService {
   ) {}
 
   async createUser(userDto: any): Promise<User> {
-    const user = await new this.userModel({
+    const user = new this.userModel({
       ...userDto,
       password: await hash(userDto.password, 10),
     });
     return user.save();
+  }
+
+  async getUser(query: FilterQuery<User>) {
+    const user = await this.userModel.findOne(query);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }
